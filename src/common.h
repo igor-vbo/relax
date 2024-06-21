@@ -19,14 +19,14 @@ namespace Relax {
         value.m_right = &value;
     };
 
-    template<typename T, typename K>
-    concept SelfKeyed = requires(T value, K key) {
-        value.m_key < key;
-        value.m_key == key;
+    template<typename T>
+    concept SelfKeyed = requires(T value) {
+        { value.m_key < value.m_key } noexcept;
+        { value.m_key == value.m_key } noexcept;
     };
 
-    template<typename K, typename T>
-    concept IntrusiveMappable = Woody<T> && SelfKeyed<T, K>;
+    template<typename T>
+    concept IntrusiveMappable = Woody<T> && SelfKeyed<T>;
 
     template<class K, class T>
     struct TIntrusiveMappableBase {

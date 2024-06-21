@@ -70,7 +70,7 @@ namespace Relax {
         class iterator : public std::iterator<std::input_iterator_tag, mapped_type> {
             friend class Map<K, T, Lock>;
 
-            iterator(typename IntrusiveMap<key_type, Node>::iterator it)
+            iterator(typename IntrusiveMap<Node>::iterator it)
               : m_it(it) { }
 
         public:
@@ -100,7 +100,7 @@ namespace Relax {
             bool operator!=(const iterator& other) const { return m_it != other.m_it; }
 
         private:
-            typename IntrusiveMap<key_type, Node>::iterator m_it;
+            typename IntrusiveMap<Node>::iterator m_it;
         };
 
         iterator begin() const { return iterator(m_tree.begin()); }
@@ -110,7 +110,7 @@ namespace Relax {
         bool checkRB() { return m_tree.checkRB(); }
 
     private:
-        IntrusiveMap<key_type, Node> m_tree;
+        IntrusiveMap<Node> m_tree;
 
     private:
         Lock m_lock;
