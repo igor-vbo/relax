@@ -3,27 +3,27 @@
 #include <cassert>
 #include <queue>
 
+#include "common.h"
 #include "types.h"
 
 namespace Relax {
     //////////////////////////////////////////////////////////////////
-    template<class K, class T>
+    template<class K, class V>
+        requires IntrusiveMappable<K, V>
     class IntrusiveMap {
         // ptr: 0bXXXXX...XXXY
         // Y - color (0 - black, 1 - red)
 
-        using value_t = T;
-        // static_assert(std::is_pointer<T>(), "");
-        static_assert(noexcept(std::declval<K>() < std::declval<K>()), "");
+        using value_t = V;
+        // TODO: fix
         static_assert(noexcept(std::declval<K>() != std::declval<K>()), "");
-        static_assert(noexcept(std::declval<K>() == std::declval<K>()), "");
 
     public:
         typedef K key_type;
-        typedef T mapped_type;
-        typedef T* pointer_type;
-        typedef T& reference;
-        typedef const T& const_reference;
+        typedef V mapped_type;
+        typedef V* pointer_type;
+        typedef V& reference;
+        typedef const V& const_reference;
         typedef size_t size_type;
 
     public:
@@ -54,7 +54,7 @@ namespace Relax {
 
     public:
         class iterator : public std::iterator<std::input_iterator_tag, pointer_type> {
-            friend class IntrusiveMap<K, T>;
+            friend class IntrusiveMap<K, V>;
 
             iterator(pointer_type node)
               : m_node(node) { }
@@ -144,14 +144,16 @@ namespace Relax {
     };
 
     //--------------------------------------------------------------//
-    template<class K, class T>
-    IntrusiveMap<K, T>::IntrusiveMap()
+    template<class K, class V>
+        requires IntrusiveMappable<K, V>
+    IntrusiveMap<K, V>::IntrusiveMap()
       : m_root(nullptr)
       , m_size(0) { }
 
     //--------------------------------------------------------------//
-    template<class K, class T>
-    typename IntrusiveMap<K, T>::iterator IntrusiveMap<K, T>::find(const key_type& key) noexcept {
+    template<class K, class V>
+        requires IntrusiveMappable<K, V>
+    typename IntrusiveMap<K, V>::iterator IntrusiveMap<K, V>::find(const key_type& key) noexcept {
         if (nullptr == m_root) {
             return end();
         }
@@ -168,8 +170,9 @@ namespace Relax {
     }
 
     //--------------------------------------------------------------//
-    template<class K, class T>
-    std::pair<typename IntrusiveMap<K, T>::iterator, bool> IntrusiveMap<K, T>::emplace(const key_type& key,
+    template<class K, class V>
+        requires IntrusiveMappable<K, V>
+    std::pair<typename IntrusiveMap<K, V>::iterator, bool> IntrusiveMap<K, V>::emplace(const key_type& key,
                                                                                        pointer_type value) {
         if constexpr (noexcept(value->m_key = key)) {
             value->m_key = key;
@@ -187,8 +190,9 @@ namespace Relax {
     }
 
     //--------------------------------------------------------------//
-    template<class K, class T>
-    std::pair<typename IntrusiveMap<K, T>::iterator, bool> IntrusiveMap<K, T>::insert(
+    template<class K, class V>
+        requires IntrusiveMappable<K, V>
+    std::pair<typename IntrusiveMap<K, V>::iterator, bool> IntrusiveMap<K, V>::insert(
         pointer_type const value) noexcept {
         const key_type& key = value->m_key;
 
@@ -305,8 +309,9 @@ namespace Relax {
     }
 
     //--------------------------------------------------------------//
-    template<class K, class T>
-    size_t IntrusiveMap<K, T>::erase(const key_type& key) noexcept {
+    template<class K, class V>
+        requires IntrusiveMappable<K, V>
+    size_t IntrusiveMap<K, V>::erase(const key_type& key) noexcept {
         iterator iter = find(key);
         if (nullptr == iter.m_node)
             return 0;
@@ -318,8 +323,9 @@ namespace Relax {
     }
 
     //--------------------------------------------------------------//
-    template<class K, class T>
-    typename IntrusiveMap<K, T>::iterator IntrusiveMap<K, T>::erase(iterator iter) noexcept {
+    template<class K, class V>
+        requires IntrusiveMappable<K, V>
+    typename IntrusiveMap<K, V>::iterator IntrusiveMap<K, V>::erase(iterator iter) noexcept {
         if (nullptr == iter.m_node)
             return iter;
 
@@ -529,15 +535,17 @@ namespace Relax {
     }
 
     //--------------------------------------------------------------//
-    template<class K, class T>
-    void IntrusiveMap<K, T>::clear() noexcept {
+    template<class K, class V>
+        requires IntrusiveMappable<K, V>
+    void IntrusiveMap<K, V>::clear() noexcept {
         m_root = nullptr;
         m_size = 0;
     }
 
     //--------------------------------------------------------------//
-    template<class K, class T>
-    void IntrusiveMap<K, T>::clearWithDestruct() noexcept {
+    template<class K, class V>
+        requires IntrusiveMappable<K, V>
+    void IntrusiveMap<K, V>::clearWithDestruct() noexcept {
         pointer_type node = m_root;
         while (nullptr != node) {
             pointer_type next = node->m_left;
@@ -563,14 +571,16 @@ namespace Relax {
     }
 
     //--------------------------------------------------------------//
-    template<class K, class T>
-    size_t IntrusiveMap<K, T>::size() const noexcept {
+    template<class K, class V>
+        requires IntrusiveMappable<K, V>
+    size_t IntrusiveMap<K, V>::size() const noexcept {
         return m_size;
     }
 
     //--------------------------------------------------------------//
-    template<class K, class T>
-    bool IntrusiveMap<K, T>::checkRB() noexcept {
+    template<class K, class V>
+        requires IntrusiveMappable<K, V>
+    bool IntrusiveMap<K, V>::checkRB() noexcept {
         if (nullptr == m_root) {
             assert(0 == m_size);
             return true;
@@ -619,8 +629,9 @@ namespace Relax {
     }
 
     //--------------------------------------------------------------//
-    template<class K, class T>
-    T* IntrusiveMap<K, T>::next(pointer_type node) noexcept {
+    template<class K, class V>
+        requires IntrusiveMappable<K, V>
+    V* IntrusiveMap<K, V>::next(pointer_type node) noexcept {
         if (nullptr != node->m_right) {
             return maxLeft(pure(node->m_right));
         }
@@ -634,8 +645,9 @@ namespace Relax {
     }
 
     //--------------------------------------------------------------//
-    template<class K, class T>
-    T* IntrusiveMap<K, T>::maxLeft(pointer_type node) noexcept {
+    template<class K, class V>
+        requires IntrusiveMappable<K, V>
+    V* IntrusiveMap<K, V>::maxLeft(pointer_type node) noexcept {
         while (nullptr != node->m_left)
             node = pure(node->m_left);
 
@@ -643,8 +655,9 @@ namespace Relax {
     }
 
     //--------------------------------------------------------------//
-    template<class K, class T>
-    void IntrusiveMap<K, T>::erase_swap(pointer_type one, pointer_type other) noexcept {
+    template<class K, class V>
+        requires IntrusiveMappable<K, V>
+    void IntrusiveMap<K, V>::erase_swap(pointer_type one, pointer_type other) noexcept {
         // one may be root
         assert(nullptr != other->m_parent);
         assert(one->m_key < other->m_key);  // other is maxLeft right son of one
@@ -695,8 +708,9 @@ namespace Relax {
     }
 
     //--------------------------------------------------------------//
-    template<class K, class T>
-    T* IntrusiveMap<K, T>::uncle(pointer_type const parent) noexcept {
+    template<class K, class V>
+        requires IntrusiveMappable<K, V>
+    V* IntrusiveMap<K, V>::uncle(pointer_type const parent) noexcept {
         assert_pure(parent);
 
         pointer_type const grandpa = pure(parent->m_parent);
@@ -709,8 +723,9 @@ namespace Relax {
     }
 
     //--------------------------------------------------------------//
-    template<class K, class T>
-    void IntrusiveMap<K, T>::pred_rotate(pointer_type const parent,
+    template<class K, class V>
+        requires IntrusiveMappable<K, V>
+    void IntrusiveMap<K, V>::pred_rotate(pointer_type const parent,
                                          pointer_type const node,
                                          pointer_type const grandpa) {
         assert_pure(parent);
@@ -727,8 +742,9 @@ namespace Relax {
     }
 
     //--------------------------------------------------------------//
-    template<class K, class T>
-    void IntrusiveMap<K, T>::rotate_left(pointer_type const parent, pointer_type const node) {
+    template<class K, class V>
+        requires IntrusiveMappable<K, V>
+    void IntrusiveMap<K, V>::rotate_left(pointer_type const parent, pointer_type const node) {
         parent->m_right = node->m_left;
         if (nullptr != node->m_left)
             set_parent_save_color(node->m_left, parent);
@@ -738,8 +754,9 @@ namespace Relax {
     }
 
     //--------------------------------------------------------------//
-    template<class K, class T>
-    void IntrusiveMap<K, T>::rotate_right(pointer_type const parent, pointer_type const node) {
+    template<class K, class V>
+        requires IntrusiveMappable<K, V>
+    void IntrusiveMap<K, V>::rotate_right(pointer_type const parent, pointer_type const node) {
         parent->m_left = node->m_right;
         if (nullptr != node->m_right)
             set_parent_save_color(node->m_right, parent);
@@ -749,58 +766,67 @@ namespace Relax {
     }
 
     //--------------------------------------------------------------//
-    template<class K, class T>
-    bool IntrusiveMap<K, T>::isChildsBlack(pointer_type node) {
+    template<class K, class V>
+        requires IntrusiveMappable<K, V>
+    bool IntrusiveMap<K, V>::isChildsBlack(pointer_type node) {
         return ((nullptr == node->m_left) || is_node_black(node->m_left)) &&
                ((nullptr == node->m_right) || is_node_black(node->m_right));
     }
 
     //--------------------------------------------------------------//
-    template<class K, class T>
-    size_t IntrusiveMap<K, T>::color(pointer_type node) {
+    template<class K, class V>
+        requires IntrusiveMappable<K, V>
+    size_t IntrusiveMap<K, V>::color(pointer_type node) {
         return (size_t)node->m_parent & (size_t)1;
     }
 
     //--------------------------------------------------------------//
-    template<class K, class T>
-    bool IntrusiveMap<K, T>::is_node_black(pointer_type node) {
+    template<class K, class V>
+        requires IntrusiveMappable<K, V>
+    bool IntrusiveMap<K, V>::is_node_black(pointer_type node) {
         return 0 == ((size_t)node->m_parent & (size_t)1);
     }
 
     //--------------------------------------------------------------//
-    template<class K, class T>
-    bool IntrusiveMap<K, T>::is_node_red(pointer_type node) {
+    template<class K, class V>
+        requires IntrusiveMappable<K, V>
+    bool IntrusiveMap<K, V>::is_node_red(pointer_type node) {
         return 0 != ((size_t)node->m_parent & (size_t)1);
     }
 
     //--------------------------------------------------------------//
-    template<class K, class T>
-    void IntrusiveMap<K, T>::set_parent_save_color(pointer_type node, pointer_type parent) {
+    template<class K, class V>
+        requires IntrusiveMappable<K, V>
+    void IntrusiveMap<K, V>::set_parent_save_color(pointer_type node, pointer_type parent) {
         assert_pure(parent);
         node->m_parent = (pointer_type)((size_t)parent | color(node));
     }
 
     //--------------------------------------------------------------//
-    template<class K, class T>
-    T* IntrusiveMap<K, T>::red(pointer_type node) {
+    template<class K, class V>
+        requires IntrusiveMappable<K, V>
+    V* IntrusiveMap<K, V>::red(pointer_type node) {
         return (pointer_type)((size_t)node | (size_t)1);
     }
 
     //--------------------------------------------------------------//
-    template<class K, class T>
-    T* IntrusiveMap<K, T>::black(pointer_type ptr) {
+    template<class K, class V>
+        requires IntrusiveMappable<K, V>
+    V* IntrusiveMap<K, V>::black(pointer_type ptr) {
         return (pointer_type)((size_t)ptr & (~((size_t)0b1)));
     }
 
     //--------------------------------------------------------------//
-    template<class K, class T>
-    T* IntrusiveMap<K, T>::pure(pointer_type ptr) {
+    template<class K, class V>
+        requires IntrusiveMappable<K, V>
+    V* IntrusiveMap<K, V>::pure(pointer_type ptr) {
         return (pointer_type)((size_t)ptr & (~((size_t)0b111)));
     }
 
     //--------------------------------------------------------------//
-    template<class K, class T>
-    void IntrusiveMap<K, T>::assert_pure(pointer_type ptr) {
+    template<class K, class V>
+        requires IntrusiveMappable<K, V>
+    void IntrusiveMap<K, V>::assert_pure(pointer_type ptr) {
         assert(0 == (((size_t)ptr) & (size_t)0b111));
     }
 }  // namespace Relax

@@ -8,26 +8,25 @@ namespace Relax {
 
     //////////////////////////////////////////////////////////////////
     // TODO: Alloc
-    template<class V>
+    template<class T>
     class MutexFreeQueue {
-        struct Node {
+        struct Node : TChainableBase<Node> {
             Node() = delete;
 
-            Node(const V& value);
+            Node(const T& value);
 
             template<typename... Args>
             Node(Args&&... args);
 
         public:
-            Node* m_next;
-            V m_value;
+            T m_value;
         };
 
     public:
-        typedef V value_type;
-        typedef V& reference;
-        typedef const V& const_reference;
-        typedef typename IntrusiveMutexFreeQueue<V>::size_type size_type;
+        typedef T value_type;
+        typedef T& reference;
+        typedef const T& const_reference;
+        typedef typename IntrusiveMutexFreeQueue<Node>::size_type size_type;
 
     public:
         MutexFreeQueue();
@@ -60,52 +59,52 @@ namespace Relax {
     };
 
     //--------------------------------------------------------------//
-    template<class V>
-    MutexFreeQueue<V>::MutexFreeQueue()
+    template<class T>
+    MutexFreeQueue<T>::MutexFreeQueue()
       : m_queue() { }
 
     //--------------------------------------------------------------//
-    template<class V>
-    MutexFreeQueue<V>::~MutexFreeQueue() {
+    template<class T>
+    MutexFreeQueue<T>::~MutexFreeQueue() {
         clear();
     }
 
     //--------------------------------------------------------------//
-    template<class V>
-    inline bool MutexFreeQueue<V>::empty() const noexcept {
+    template<class T>
+    inline bool MutexFreeQueue<T>::empty() const noexcept {
         return m_queue.empty();
     }
 
     //--------------------------------------------------------------//
-    template<class V>
-    inline typename MutexFreeQueue<V>::size_type MutexFreeQueue<V>::size() const noexcept {
+    template<class T>
+    inline typename MutexFreeQueue<T>::size_type MutexFreeQueue<T>::size() const noexcept {
         return m_queue.size();
     }
 
     //--------------------------------------------------------------//
-    template<class V>
-    inline void MutexFreeQueue<V>::push(const value_type& value) {
+    template<class T>
+    inline void MutexFreeQueue<T>::push(const value_type& value) {
         Node* node = new Node(value);
         return m_queue.push(node);
     }
 
     //--------------------------------------------------------------//
-    template<class V>
-    inline void MutexFreeQueue<V>::push(value_type&& value) {
+    template<class T>
+    inline void MutexFreeQueue<T>::push(value_type&& value) {
         return emplace(std::move(value));
     }
 
     //--------------------------------------------------------------//
-    template<class V>
+    template<class T>
     template<typename... Args>
-    inline void MutexFreeQueue<V>::emplace(Args&&... args) {
+    inline void MutexFreeQueue<T>::emplace(Args&&... args) {
         Node* node = new Node(std::forward<Args>(args)...);
         return m_queue.push(node);
     }
 
     //--------------------------------------------------------------//
-    template<class V>
-    bool MutexFreeQueue<V>::pop(value_type& ref) {
+    template<class T>
+    bool MutexFreeQueue<T>::pop(value_type& ref) {
         Node* node = m_queue.pop();
         if (nullptr == node)
             return false;
@@ -123,8 +122,8 @@ namespace Relax {
     }
 
     //--------------------------------------------------------------//
-    template<class V>
-    void MutexFreeQueue<V>::clear() {
+    template<class T>
+    void MutexFreeQueue<T>::clear() {
         Node* val = m_queue.pop();
         while (val) {
             delete val;
@@ -133,17 +132,15 @@ namespace Relax {
     }
 
     //--------------------------------------------------------------//
-    template<class V>
-    MutexFreeQueue<V>::Node::Node(const V& value)
-      : m_next(nullptr)
-      , m_value(value) { }
+    template<class T>
+    MutexFreeQueue<T>::Node::Node(const T& value)
+      : m_value(value) { }
 
     //--------------------------------------------------------------//
-    template<class V>
+    template<class T>
     template<typename... Args>
-    MutexFreeQueue<V>::Node::Node(Args&&... args)
-      : m_next(nullptr)
-      , m_value(std::forward<Args>(args)...) { }
+    MutexFreeQueue<T>::Node::Node(Args&&... args)
+      : m_value(std::forward<Args>(args)...) { }
 
     //////////////////////////////////////////////////////////////////
 

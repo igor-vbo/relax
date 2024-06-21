@@ -16,25 +16,16 @@ namespace Relax {
     template<class K, class T, class Lock = FakeLock>
     class Map {
     public:
-        struct Node {
+        struct Node : TIntrusiveMappableBase<K, Node> {
             template<typename... Args>
             Node(K&& key, Args&&... args)
-              : m_parent(nullptr)
-              , m_left(nullptr)
-              , m_right(nullptr)
-              , m_key(std::forward<K>(key))
+              : TIntrusiveMappableBase<K, Node>(std::forward<K>(key))
               , m_value(std::forward<Args>(args)...) { }
 
             template<typename... Args>
             Node(const K& key, Args&&... args)
               : Node(K{key}, std::forward<Args>(args)...) { }
 
-            Node() = delete;
-
-            Node* m_parent;
-            Node* m_left;
-            Node* m_right;
-            K m_key;
             T m_value;
         };
 

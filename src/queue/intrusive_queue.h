@@ -9,16 +9,8 @@ namespace Relax {
 
 #pragma region IntrusiveMutexFreeQueue
 
-// TODO: concept
-#if 0
-    template<typename T>
-    concept Nextable = requires(T value) {
-        { (value->m_next) } -> T*;
-    };
-#endif
-
     //////////////////////////////////////////////////////////////////
-    template<class V>
+    template<Chainable V>
     class IntrusiveMutexFreeQueue {
     public:
         typedef V* pointer_type;
@@ -74,7 +66,7 @@ namespace Relax {
     };
 
     //--------------------------------------------------------------//
-    template<class V>
+    template<Chainable V>
     void IntrusiveMutexFreeQueue<V>::setPopPauseCnt(uint32_t old, uint32_t actual) {
         if (actual <= old) {
             m_pop_pause_cnt.store(std::max(1u, old - 1), std::memory_order_relaxed);
@@ -85,8 +77,8 @@ namespace Relax {
     }
 
     //-----------------------------------------------------------------------//
-    template<class T>
-    bool IntrusiveMutexFreeQueue<T>::markHead(pointer_type& head) {
+    template<Chainable V>
+    bool IntrusiveMutexFreeQueue<V>::markHead(pointer_type& head) {
         return m_head.compare_exchange_strong(head,
                                               marked(head),
                                               std::memory_order_relaxed,
@@ -94,38 +86,38 @@ namespace Relax {
     }
 
     //-----------------------------------------------------------------------//
-    template<class T>
-    bool IntrusiveMutexFreeQueue<T>::isMarked(pointer_type ptr) {
+    template<Chainable V>
+    bool IntrusiveMutexFreeQueue<V>::isMarked(pointer_type ptr) {
         return reinterpret_cast<uintptr_t>(ptr) & 0b1;
     }
 
     //-----------------------------------------------------------------------//
-    template<class T>
-    typename IntrusiveMutexFreeQueue<T>::pointer_type IntrusiveMutexFreeQueue<T>::marked(pointer_type ptr) {
+    template<Chainable V>
+    typename IntrusiveMutexFreeQueue<V>::pointer_type IntrusiveMutexFreeQueue<V>::marked(pointer_type ptr) {
         return reinterpret_cast<pointer_type>(reinterpret_cast<uintptr_t>(ptr) | 0b1);
     }
 
     //--------------------------------------------------------------//
-    template<class V>
+    template<Chainable V>
     IntrusiveMutexFreeQueue<V>::IntrusiveMutexFreeQueue()
       : m_head(nullptr)
       , m_tail(nullptr)
       , m_size(0) { }
 
     //--------------------------------------------------------------//
-    template<class V>
+    template<Chainable V>
     inline bool IntrusiveMutexFreeQueue<V>::empty() const noexcept {
         return 0 == m_size.load(std::memory_order_relaxed);
     }
 
     //--------------------------------------------------------------//
-    template<class V>
+    template<Chainable V>
     inline typename IntrusiveMutexFreeQueue<V>::size_type IntrusiveMutexFreeQueue<V>::size() const noexcept {
         return m_size.load(std::memory_order_relaxed);
     }
 
     //--------------------------------------------------------------//
-    template<class V>
+    template<Chainable V>
     inline void IntrusiveMutexFreeQueue<V>::push(pointer_type ptr) noexcept {
         if (nullptr == ptr)
             return;
@@ -144,7 +136,7 @@ namespace Relax {
     }
 
     //--------------------------------------------------------------//
-    template<class V>
+    template<Chainable V>
     inline typename IntrusiveMutexFreeQueue<V>::pointer_type IntrusiveMutexFreeQueue<V>::pop() noexcept {
         uint32_t pop_pause_cnt = 0;
         const uint32_t old_pop_pause_cnt = m_pop_pause_cnt.load(std::memory_order_relaxed);
@@ -203,14 +195,14 @@ namespace Relax {
     }
 
     //--------------------------------------------------------------//
-    template<class V>
+    template<Chainable V>
     inline bool IntrusiveMutexFreeQueue<V>::pop(pointer_type& ptr) noexcept {
         ptr = pop();
         return (nullptr != ptr);
     }
 
     //--------------------------------------------------------------//
-    template<class V>
+    template<Chainable V>
     inline void IntrusiveMutexFreeQueue<V>::clear() noexcept {
         while (pop())
             ;

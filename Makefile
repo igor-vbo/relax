@@ -7,7 +7,7 @@ DBGFLAGS=-g $(SANFLAGS)
 RELFLAGS=-O3 -march=native
 RWDFLAGS=$(RELFLAGS) $(DBGFLAGS)
 
-override CFLAGS :=$(CFLAGS) -std=c++17 -pipe -Wall -Wextra -Wno-deprecated-declarations
+override CFLAGS :=$(CFLAGS) -std=c++20 -pipe -Wall -Wextra -Wno-deprecated-declarations
 override LDFLAGS :=$(LDFLAGS) -lgtest -pthread
 
 OBJ_LIST=./src/map/ut.o ./src/map/bench.o ./src/queue/ut.o ./src/queue/verification.o ./src/queue/bench.o

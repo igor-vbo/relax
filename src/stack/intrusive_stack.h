@@ -5,26 +5,17 @@
 #include <algorithm>
 #include <atomic>
 
-#include "stdint.h"
-// #include <concepts>
+#include "common.h"
 
 namespace Relax {
 
 #pragma region IntrusiveMutexFreeStack
 
-// TODO: concept
-#if 0
-    template<typename T>
-    concept Nextable = requires(T value) {
-        { (value->m_next) } -> T*;
-    };
-#endif
-
     //////////////////////////////////////////////////////////////////
     /*
      *
      */
-    template<class V>
+    template<Chainable V>
     class IntrusiveMutexFreeStack {
     public:
         typedef V* pointer_type;
@@ -72,8 +63,8 @@ namespace Relax {
     };
 
     //--------------------------------------------------------------//
-    template<class V>
-    void IntrusiveMutexFreeStack<V>::setPopPauseCnt(uint32_t old, uint32_t actual) {
+    template<Chainable V>
+    void IntrusiveMutexFreeStack<T>::setPopPauseCnt(uint32_t old, uint32_t actual) {
         if (actual <= old) {
             m_pop_pause_cnt.store(std::max(1u, old - 1), std::memory_order_relaxed);
         }
@@ -83,7 +74,7 @@ namespace Relax {
     }
 
     //-----------------------------------------------------------------------//
-    template<class T>
+    template<Chainable V>
     bool IntrusiveMutexFreeStack<T>::markHead(pointer_type& head) {
         return m_head.compare_exchange_strong(head,
                                               marked(head),
@@ -92,38 +83,38 @@ namespace Relax {
     }
 
     //-----------------------------------------------------------------------//
-    template<class T>
+    template<Chainable V>
     bool IntrusiveMutexFreeStack<T>::isMarked(pointer_type ptr) {
         return reinterpret_cast<uintptr_t>(ptr) & 0b1;
     }
 
     //-----------------------------------------------------------------------//
-    template<class T>
+    template<Chainable V>
     typename IntrusiveMutexFreeStack<T>::pointer_type IntrusiveMutexFreeStack<T>::marked(pointer_type ptr) {
         return reinterpret_cast<pointer_type>(reinterpret_cast<uintptr_t>(ptr) | 0b1);
     }
 
     //--------------------------------------------------------------//
-    template<class V>
-    IntrusiveMutexFreeStack<V>::IntrusiveMutexFreeStack()
+    template<Chainable V>
+    IntrusiveMutexFreeStack<T>::IntrusiveMutexFreeStack()
       : m_head(nullptr)
       , m_size(0) { }
 
     //--------------------------------------------------------------//
-    template<class V>
-    inline bool IntrusiveMutexFreeStack<V>::empty() const noexcept {
+    template<Chainable V>
+    inline bool IntrusiveMutexFreeStack<T>::empty() const noexcept {
         return 0 == m_size.load(std::memory_order_relaxed);
     }
 
     //--------------------------------------------------------------//
-    template<class V>
-    inline typename IntrusiveMutexFreeStack<V>::size_type IntrusiveMutexFreeStack<V>::size() const noexcept {
+    template<Chainable V>
+    inline typename IntrusiveMutexFreeStack<T>::size_type IntrusiveMutexFreeStack<T>::size() const noexcept {
         return m_size.load(std::memory_order_relaxed);
     }
 
     //--------------------------------------------------------------//
-    template<class V>
-    typename IntrusiveMutexFreeStack<V>::pointer_type IntrusiveMutexFreeStack<V>::lockHead() noexcept {
+    template<Chainable V>
+    typename IntrusiveMutexFreeStack<T>::pointer_type IntrusiveMutexFreeStack<T>::lockHead() noexcept {
         uint32_t pop_pause_cnt = 0;
         const uint32_t old_pop_pause_cnt = m_pop_pause_cnt.load(std::memory_order_relaxed);
         pointer_type head = m_head.load(std::memory_order_relaxed);
@@ -148,8 +139,8 @@ namespace Relax {
     }
 
     //--------------------------------------------------------------//
-    template<class V>
-    inline void IntrusiveMutexFreeStack<V>::push(pointer_type ptr) noexcept {
+    template<Chainable V>
+    inline void IntrusiveMutexFreeStack<T>::push(pointer_type ptr) noexcept {
         if (nullptr == ptr)
             return;
 
@@ -165,8 +156,8 @@ namespace Relax {
     }
 
     //--------------------------------------------------------------//
-    template<class V>
-    inline typename IntrusiveMutexFreeStack<V>::pointer_type IntrusiveMutexFreeStack<V>::pop() noexcept {
+    template<Chainable V>
+    inline typename IntrusiveMutexFreeStack<T>::pointer_type IntrusiveMutexFreeStack<T>::pop() noexcept {
         pointer_type const head = lockHead();
 
         if (nullptr == head)
@@ -189,7 +180,7 @@ namespace Relax {
 
     //////////////////////////////////////////////////////////////////
     // TODO: Alloc
-    template<class V>
+    template<class T>
     class MutexFreeStack {
         struct Node {
             Node() = delete;
@@ -208,7 +199,7 @@ namespace Relax {
         typedef V value_type;
         typedef V& reference;
         typedef const V& const_reference;
-        typedef typename IntrusiveMutexFreeStack<V>::size_type size_type;
+        typedef typename IntrusiveMutexFreeStack<T>::size_type size_type;
 
     public:
         MutexFreeStack();
@@ -241,52 +232,52 @@ namespace Relax {
     };
 
     //--------------------------------------------------------------//
-    template<class V>
-    MutexFreeStack<V>::MutexFreeStack()
+    template<class T>
+    MutexFreeStack<T>::MutexFreeStack()
       : m_stack() { }
 
     //--------------------------------------------------------------//
-    template<class V>
-    MutexFreeStack<V>::~MutexFreeStack() {
+    template<class T>
+    MutexFreeStack<T>::~MutexFreeStack() {
         clear();
     }
 
     //--------------------------------------------------------------//
-    template<class V>
-    inline bool MutexFreeStack<V>::empty() const noexcept {
+    template<class T>
+    inline bool MutexFreeStack<T>::empty() const noexcept {
         return m_stack.empty();
     }
 
     //--------------------------------------------------------------//
-    template<class V>
-    inline typename MutexFreeStack<V>::size_type MutexFreeStack<V>::size() const noexcept {
+    template<class T>
+    inline typename MutexFreeStack<T>::size_type MutexFreeStack<T>::size() const noexcept {
         return m_stack.size();
     }
 
     //--------------------------------------------------------------//
-    template<class V>
-    inline void MutexFreeStack<V>::push(const value_type& value) {
+    template<class T>
+    inline void MutexFreeStack<T>::push(const value_type& value) {
         Node* node = new Node(value);
         return m_stack.push(node);
     }
 
     //--------------------------------------------------------------//
-    template<class V>
-    inline void MutexFreeStack<V>::push(value_type&& value) {
+    template<class T>
+    inline void MutexFreeStack<T>::push(value_type&& value) {
         return emplace(std::move(value));
     }
 
     //--------------------------------------------------------------//
-    template<class V>
+    template<class T>
     template<typename... Args>
-    inline void MutexFreeStack<V>::emplace(Args&&... args) {
+    inline void MutexFreeStack<T>::emplace(Args&&... args) {
         Node* node = new Node(std::forward<Args>(args)...);
         return m_stack.push(node);
     }
 
     //--------------------------------------------------------------//
-    template<class V>
-    bool MutexFreeStack<V>::pop(value_type& ref) {
+    template<class T>
+    bool MutexFreeStack<T>::pop(value_type& ref) {
         Node* node = m_stack.pop();
         if (nullptr == node)
             return false;
@@ -304,8 +295,8 @@ namespace Relax {
     }
 
     //--------------------------------------------------------------//
-    template<class V>
-    void MutexFreeStack<V>::clear() {
+    template<class T>
+    void MutexFreeStack<T>::clear() {
         Node* val = m_stack.pop();
         while (val) {
             delete val;
@@ -314,15 +305,15 @@ namespace Relax {
     }
 
     //--------------------------------------------------------------//
-    template<class V>
-    MutexFreeStack<V>::Node::Node(const V& value)
+    template<class T>
+    MutexFreeStack<T>::Node::Node(const V& value)
       : m_next(nullptr)
       , m_value(value) { }
 
     //--------------------------------------------------------------//
-    template<class V>
+    template<class T>
     template<typename... Args>
-    MutexFreeStack<V>::Node::Node(Args&&... args)
+    MutexFreeStack<T>::Node::Node(Args&&... args)
       : m_next(nullptr)
       , m_value(std::forward<Args>(args)...) { }
 
