@@ -2,6 +2,7 @@
 
 #include <atomic>
 
+#include "sync/atomic.h"
 #include "common.h"
 #include "types.h"
 
@@ -122,17 +123,17 @@ namespace Relax {
         if (nullptr == ptr)
             return;
 
-        __atomic_store_n(&ptr->m_next, nullptr, __ATOMIC_RELEASE);
+        NAtomic::store(&ptr->m_next, (pointer_type)nullptr, std::memory_order_release);
 
         pointer_type tail = m_tail.exchange(ptr, std::memory_order_acq_rel);
 
         if (nullptr == tail)
             m_head.store(ptr, std::memory_order_relaxed);
         else {
-            __atomic_store_n(&tail->m_next, ptr, __ATOMIC_RELEASE);
+            NAtomic::store(&tail->m_next, ptr, std::memory_order_release);
         }
 
-        // m_size.fetch_add(1, std::memory_order_relaxed);
+        m_size.fetch_add(1, std::memory_order_relaxed);
     }
 
     //--------------------------------------------------------------//
@@ -162,7 +163,7 @@ namespace Relax {
         }
 
         // m_head is marked (locked)
-        pointer_type next = __atomic_load_n(&head->m_next, __ATOMIC_ACQUIRE);
+        pointer_type next = NAtomic::load(&head->m_next, std::memory_order_acquire);
 
 #if RELAX_MF_QUEUE_VERIFICATION
         head->m_value.m_pop_cnt = m_pop_cnt.fetch_add(1, std::memory_order_relaxed);
@@ -174,7 +175,7 @@ namespace Relax {
                 // already inserted by other thread
                 do {
                     CPU_PAUSE();
-                    next = __atomic_load_n(&head->m_next, __ATOMIC_ACQUIRE);
+                    next = NAtomic::load(&head->m_next, std::memory_order_acquire);
                 } while (nullptr == next);
 
                 m_head.store(next, std::memory_order_relaxed);
@@ -188,8 +189,9 @@ namespace Relax {
             m_head.store(next, std::memory_order_relaxed);
         }
 
-        // m_size.fetch_sub(1, std::memory_order_relaxed);
         setPopPauseCnt(old_pop_pause_cnt, pop_pause_cnt);
+
+        m_size.fetch_sub(1, std::memory_order_relaxed);
 
         return head;
     }

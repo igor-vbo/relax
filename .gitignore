@@ -18,6 +18,7 @@
 .ionide
 
 # Build
+build/
 test
 *.o
 

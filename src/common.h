@@ -1,7 +1,29 @@
 #pragma once
 
+#ifdef __linux__
+#define LIN 1
+#endif
+
+#if defined(__APPLE__) && defined(__MACH__)
+#define MAC 1
+#endif
+
+#if defined(WIN32) || defined(_WIN32) || defined(__WIN32__) || defined(__NT__)
+#define WIN 1
+#endif
+
+#if WIN
+    #include <immintrin.h>
+#endif
+
+#if WIN
+#define CPU_PAUSE() _mm_pause();
+#else
 #define CPU_PAUSE() __asm volatile("pause" :::)
+#endif
+
 #define CACHELINE_SIZE 64
+
 
 namespace Relax {
     template<typename T>

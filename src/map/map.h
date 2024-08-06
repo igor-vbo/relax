@@ -120,7 +120,7 @@ namespace Relax {
     template<class K, class T, class L>
     template<typename... Args>
     std::pair<typename Map<K, T, L>::iterator, bool> Map<K, T, L>::emplace(const key_type& key, Args&&... args) {
-        Map<K, T, L>::Node* node = new Node(key, std::forward<Args>(args)...);
+        typename Map<K, T, L>::Node* node = new Node(key, std::forward<Args>(args)...);
 
         // no guard
         // for simple remove of fake lock by optimizer
@@ -137,7 +137,7 @@ namespace Relax {
     template<class K, class T, class L>
     template<typename... Args>
     std::pair<typename Map<K, T, L>::iterator, bool> Map<K, T, L>::emplace(key_type&& key, Args&&... args) {
-        Map<K, T, L>::Node* node = new Node(std::forward<key_type>(key), std::forward<Args>(args)...);
+        typename Map<K, T, L>::Node* node = new Node(std::forward<key_type>(key), std::forward<Args>(args)...);
 
         // no guard
         // for simple remove of fake lock by optimizer
@@ -154,7 +154,7 @@ namespace Relax {
     template<class K, class T, class L>
     std::pair<typename Map<K, T, L>::iterator, bool> Map<K, T, L>::insert(key_type const key,
                                                                           mapped_type const value) {
-        Map<K, T, L>::Node* node = new Node(key, value);
+        typename Map<K, T, L>::Node* node = new Node(key, value);
 
         // no guard
         // for simple remove of fake lock by optimizer
@@ -171,7 +171,7 @@ namespace Relax {
     template<class K, class T, class L>
     std::pair<typename Map<K, T, L>::iterator, bool> Map<K, T, L>::insert(
         const std::pair<key_type, mapped_type>& value) {
-        Map<K, T, L>::Node* node = new Node(std::pair<key_type, mapped_type>(value));
+        typename Map<K, T, L>::Node* node = new Node(std::pair<key_type, mapped_type>(value));
 
         // no guard
         // for simple remove of fake lock by optimizer

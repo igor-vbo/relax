@@ -11,11 +11,11 @@
 
 #include "common.h"
 
-#define key_t uint32_t
-
 namespace Test {
     //////////////////////////////////////////////////////////////////
     struct TestValue {
+        using key_t = uint32_t;
+
         TestValue* m_left;
 
         TestValue* m_right;
@@ -37,6 +37,8 @@ namespace Test {
 
     //////////////////////////////////////////////////////////////////
     struct TestCommand {
+        using key_t = uint32_t;
+
         key_t m_key;
 
         bool m_is_add;
